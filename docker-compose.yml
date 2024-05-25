@@ -18,13 +18,13 @@ services:
   zipline:
     image: ghcr.io/diced/zipline
     ports:
-      - '3000:3000'
+      - '3005:3005'
     restart: unless-stopped
     environment:
       - CORE_RETURN_HTTPS=false
       - CORE_SECRET=changethis
       - CORE_HOST=0.0.0.0
-      - CORE_PORT=3000
+      - CORE_PORT=3005
       - CORE_DATABASE_URL=postgres://postgres:postgres@postgres/postgres
       - CORE_LOGGER=true
     volumes:
