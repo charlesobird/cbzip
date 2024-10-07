@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import zconfig from 'lib/config';
+import { log } from 'server/util';
 
 export default function EmbeddedFile({
   file,
@@ -63,9 +64,14 @@ export default function EmbeddedFile({
 
     const img = new Image();
     img.addEventListener('load', function () {
-      // my best attempt of recreating https://searchfox.org/mozilla-central/source/dom/html/ImageDocument.cpp#271-276
-      // and it actually works
+      // my best attempt of recreating
+      // firefox: https://searchfox.org/mozilla-central/source/dom/html/ImageDocument.cpp#271-276
+      // chromium-based: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/html/image_document.cc
 
+      // keeps image original if smaller than screen
+      if (this.width <= window.innerWidth && this.height <= window.innerHeight) return;
+
+      // resizes to fit screen
       const ratio = Math.min(innerHeight / this.naturalHeight, innerWidth / this.naturalWidth);
       const newWidth = Math.max(1, Math.floor(ratio * this.naturalWidth));
       const newHeight = Math.max(1, Math.floor(ratio * this.naturalHeight));
@@ -251,6 +257,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   let host = context.req.headers.host;
   if (!file) return { notFound: true };
 
+  const logger = log('view');
+
+  if (file.maxViews && file.views >= file.maxViews) {
+    await datasource.delete(file.name);
+    await prisma.file.delete({ where: { id: file.id } });
+
+    logger.child('file').info(`File ${file.name} has been deleted due to max views (${file.maxViews})`);
+
+    return { notFound: true };
+  }
+
   // @ts-ignore
   file.size = Number(file.size);
 
@@ -276,6 +293,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   delete user.password;
   delete user.totpSecret;
   delete user.token;
+  delete user.ratelimit;
 
   // @ts-ignore workaround because next wont allow date
   file.createdAt = file.createdAt.toString();
@@ -323,6 +341,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   // @ts-ignore
   if (file.password) file.password = true;
+
+  await prisma.file.update({
+    where: {
+      id: file.id,
+    },
+    data: {
+      views: {
+        increment: 1,
+      },
+    },
+  });
 
   return {
     props: {

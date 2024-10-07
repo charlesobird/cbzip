@@ -121,7 +121,7 @@ This section requires [Flameshot](https://www.flameshot.org/), [jq](https://sted
   
 If using wayland you will need to have [wl-clipboard](https://github.com/bugaevc/wl-clipboard) installed, for the `wl-copy` command.
 
-If you are not using GNOME/KDE/Qtile/Sway, and are using something like a wlroots-based compositor (ex. [Hyprland](https://github.com/hyprwm/Hyprland/), [River](https://github.com/riverwm/river), etc), you will need to set the `XDG_CURRENT_DESKTOP` environment variable to `sway`, which will just override it for this script. Adding `export XDG_CURRENT_DESKTOP=sway` to the start of the script will work.
+If you are not using GNOME/KDE/Qtile/Sway, and are using something like a wlroots-based or wlroots-compatible compositor (ex. [Hyprland](https://github.com/hyprwm/Hyprland/), [River](https://github.com/riverwm/river), etc), you will need to set the `XDG_CURRENT_DESKTOP` environment variable to `sway`, which will just override it for this script. Adding `export XDG_CURRENT_DESKTOP=sway` to the start of the script will work.
 
 After this, replace the `xsel -ib` with `wl-copy` in the script.
 
@@ -141,7 +141,7 @@ To upload files using flameshot we will use a script. Replace $TOKEN and $HOST w
 DATE=$(date '+%h_%Y_%d_%I_%m_%S.png');
 flameshot gui -r > ~/Pictures/$DATE;
 
-curl -H "Content-Type: multipart/form-data" -H "authorization: $TOKEN" -F file=@$1 $HOST/api/upload | jq -r 'files[0].url' | xsel -ib
+curl -H "Content-Type: multipart/form-data" -H "authorization: $TOKEN" -F file=@$1 $HOST/api/upload | jq -r '.files[0]' | xsel -ib
 ```
 
 # Contributing
