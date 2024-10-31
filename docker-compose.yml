@@ -18,7 +18,7 @@ services:
   zipline:
     image: ghcr.io/diced/zipline
     ports:
-      - '3005:3005'
+      - '3055:3005'
     restart: unless-stopped
     environment:
       - CORE_RETURN_HTTPS=false
